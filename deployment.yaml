@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: projeto-kubernetes
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: projeto-kubernetes
+
+  template:
+    metadata:
+      labels:
+        app: projeto-kubernetes
+
+    spec:
+      containers:
+      - name: projeto-kubernetes
+        image: projeto-kubernetes:latest
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 3000
