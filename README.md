@@ -1,44 +1,42 @@
-# Projeto Docker — Tutorial Completo e Detalhado
+# Projeto Kubernetes — Tutorial Completo
 
 # Sobre o Projeto
 
-Este projeto demonstra como criar e executar uma aplicação simples utilizando Docker.
+Este projeto demonstra como executar uma aplicação Node.js utilizando Kubernetes para orquestração de containers.
 
-O objetivo principal é ensinar os conceitos fundamentais de containers e padronização de ambientes modernos utilizados em DevOps.
+O objetivo é apresentar conceitos fundamentais de:
 
-Ao final do tutorial você saberá:
-
-- Criar aplicações containerizadas
-- Criar imagens Docker
-- Executar containers
-- Mapear portas
-- Resolver erros comuns
-- Entender o fluxo básico de deploy com Docker
+- Containers
+- Kubernetes
+- Pods
+- Deployments
+- Services
+- Escalabilidade
+- Orquestração de aplicações
 
 ---
 
 # Tecnologias Utilizadas
 
 - Docker
-- Docker Desktop
+- Kubernetes
 - Node.js
 - JavaScript
+- kubectl
 
 ---
 
-# O que é Docker?
+# O que é Kubernetes?
 
-Docker é uma plataforma de virtualização leve baseada em containers.
+Kubernetes é uma plataforma de orquestração de containers responsável pelo gerenciamento automatizado de aplicações modernas.
 
-Os containers permitem executar aplicações isoladas com todas as dependências necessárias.
+Com Kubernetes é possível:
 
-Isso resolve problemas como:
-
-```text
-"Na minha máquina funciona."
-```
-
-Com Docker, o ambiente fica padronizado em qualquer computador ou servidor.
+- Automatizar deploys
+- Escalar aplicações
+- Reiniciar containers automaticamente
+- Balancear carga
+- Garantir alta disponibilidade
 
 ---
 
@@ -52,119 +50,98 @@ Download oficial:
 
 https://www.docker.com/products/docker-desktop/
 
----
-
-# Configuração Inicial do Docker
-
-Após instalar:
-
-1. Abra o Docker Desktop
-2. Aguarde o Docker iniciar completamente
-3. Verifique se aparece:
-
-```text
-Engine running
-```
-
-ou:
-
-```text
-Docker Desktop is running
-```
-
 ⚠ IMPORTANTE:
 
-Se o Docker Desktop estiver fechado, os comandos Docker não funcionarão.
+Durante a instalação:
+
+- habilite WSL2
+- reinicie o computador se solicitado
 
 ---
 
-# Problema Comum — Docker não inicia
+# Habilitando Kubernetes no Docker Desktop
 
-Se aparecer erro como:
+Abra:
 
 ```text
-failed to connect to the docker API
+Docker Desktop → Settings → Kubernetes
 ```
 
-ou:
+Ative:
 
 ```text
-docker daemon not running
+Enable Kubernetes
 ```
 
-faça:
+Depois clique em:
 
-1. Reinicie o Docker Desktop
-2. Reinicie o computador
-3. Verifique se o WSL2 está instalado
-4. Ative virtualização na BIOS
+```text
+Apply & Restart
+```
+
+⚠ Aguarde até aparecer:
+
+```text
+Kubernetes running
+```
+
+Esse processo pode levar alguns minutos.
 
 ---
 
-# Verificando Instalação
+# Verificando Kubernetes
 
-Abra PowerShell ou terminal:
-
-```bash
-docker --version
-```
-
-Resultado esperado:
+Abra o terminal:
 
 ```bash
-Docker version 29.x.x
+kubectl version
 ```
 
 ---
 
-# Verificando Engine Docker
+# Testando Cluster
 
 Execute:
 
 ```bash
-docker ps
+kubectl get nodes
 ```
 
-Se não aparecer erro, o Docker está funcionando corretamente.
+Resultado esperado:
+
+```text
+NAME             STATUS   ROLES           AGE
+docker-desktop   Ready    control-plane
+```
+
+⚠ Se aparecer erro:
+
+```text
+connection refused
+```
+
+aguarde Kubernetes finalizar inicialização no Docker Desktop.
 
 ---
 
-# Estrutura Final do Projeto
-
-A estrutura correta será:
+# Estrutura do Projeto
 
 ```text
-projeto-docker/
+projeto-kubernetes/
 │
 ├── app.js
-└── Dockerfile
+├── Dockerfile
+├── deployment.yaml
+└── service.yaml
 ```
-
-⚠ IMPORTANTE:
-
-O arquivo deve chamar exatamente:
-
-```text
-Dockerfile
-```
-
-Sem:
-
-```text
-Dockerfile.txt
-```
-
-Esse é um dos erros mais comuns.
 
 ---
 
 # Passo 1 — Criar Pasta do Projeto
 
-Abra o terminal:
-
 ```bash
-mkdir projeto-docker
-cd projeto-docker
+mkdir projeto-kubernetes
+cd projeto-kubernetes
 ```
 
 ---
@@ -188,7 +165,7 @@ const server = http.createServer((req, res) => {
         'Content-Type': 'text/plain'
     });
 
-    res.end('Aplicacao Docker funcionando!');
+    res.end('Aplicacao Kubernetes funcionando!');
 
 });
 
@@ -201,47 +178,12 @@ server.listen(3000, () => {
 
 # Explicação do Código
 
-## require('http')
-
-Importa módulo HTTP do Node.js.
-
----
-
-## createServer()
-
-Cria servidor web simples.
-
----
-
-## res.writeHead()
-
-Define tipo da resposta enviada.
-
----
-
-## res.end()
-
-Envia resposta para navegador.
-
----
-
-## server.listen(3000)
-
-Define que aplicação executará na porta 3000.
-
----
-
-# Problema Comum — Porta incorreta
-
-Se alterar:
-
-```javascript
-server.listen(3000)
-```
-
-também precisará alterar no Docker.
-
-As portas precisam ser compatíveis.
+| Método | Função |
+|---|---|
+| createServer() | Cria servidor HTTP |
+| writeHead() | Define cabeçalho HTTP |
+| res.end() | Retorna resposta |
+| listen(3000) | Executa aplicação |
 
 ---
 
@@ -253,21 +195,19 @@ Crie o arquivo:
 Dockerfile
 ```
 
-⚠ MUITO IMPORTANTE:
+⚠ IMPORTANTE:
 
-No Windows, o bloco de notas pode salvar como:
+O arquivo deve chamar exatamente:
+
+```text
+Dockerfile
+```
+
+e NÃO:
 
 ```text
 Dockerfile.txt
 ```
-
-Isso causará erro:
-
-```text
-failed to read dockerfile
-```
-
-Verifique se o nome está correto.
 
 ---
 
@@ -289,33 +229,13 @@ CMD ["node", "app.js"]
 
 # Explicação do Dockerfile
 
-## FROM node:20
-
-Baixa imagem oficial do Node.js.
-
----
-
-## WORKDIR /app
-
-Cria diretório interno do container.
-
----
-
-## COPY . .
-
-Copia arquivos do projeto para container.
-
----
-
-## EXPOSE 3000
-
-Informa porta utilizada pela aplicação.
-
----
-
-## CMD ["node", "app.js"]
-
-Executa aplicação automaticamente.
+| Comando | Função |
+|---|---|
+| FROM | Imagem base Node.js |
+| WORKDIR | Diretório interno |
+| COPY | Copia arquivos |
+| EXPOSE | Expõe porta |
+| CMD | Executa aplicação |
 
 ---
 
@@ -324,41 +244,22 @@ Executa aplicação automaticamente.
 Execute:
 
 ```bash
-docker build -t projeto-docker .
+docker build -t projeto-kubernetes:latest .
 ```
 
----
+⚠ IMPORTANTE:
 
-# Explicação do Comando
-
-| Parte | Função |
-|---|---|
-| docker build | Cria imagem Docker |
-| -t | Define nome da imagem |
-| projeto-docker | Nome escolhido |
-| . | Diretório atual |
-
----
-
-# Problema Comum — Dockerfile não encontrado
-
-Erro:
+Utilize:
 
 ```text
-failed to read dockerfile
+:latest
 ```
 
-Significa:
-
-- Dockerfile inexistente
-- Nome incorreto
-- Arquivo salvo como `.txt`
+para evitar problemas de versão no Kubernetes.
 
 ---
 
-# Verificando Imagens Criadas
-
-Execute:
+# Verificando Imagem
 
 ```bash
 docker images
@@ -367,320 +268,399 @@ docker images
 Resultado esperado:
 
 ```text
-REPOSITORY         TAG       IMAGE ID
-projeto-docker     latest    xxxxxxx
+REPOSITORY             TAG       IMAGE ID
+projeto-kubernetes     latest    xxxxxxx
 ```
 
 ---
 
-# Passo 5 — Executar Container
+# Passo 5 — Criar Deployment Kubernetes
+
+Crie:
+
+```text
+deployment.yaml
+```
+
+Conteúdo:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: projeto-kubernetes
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: projeto-kubernetes
+
+  template:
+    metadata:
+      labels:
+        app: projeto-kubernetes
+
+    spec:
+      containers:
+      - name: projeto-kubernetes
+        image: projeto-kubernetes:latest
+
+        imagePullPolicy: IfNotPresent
+
+        ports:
+        - containerPort: 3000
+```
+
+---
+
+# Explicação do Deployment
+
+| Campo | Função |
+|---|---|
+| replicas | Quantidade de containers |
+| image | Imagem Docker utilizada |
+| containerPort | Porta interna |
+| imagePullPolicy | Política de download |
+
+---
+
+# IMPORTANTE — imagePullPolicy
+
+Utilize:
+
+```yaml
+imagePullPolicy: IfNotPresent
+```
+
+Evita erro:
+
+```text
+ErrImageNeverPull
+```
+
+muito comum no Docker Desktop Windows.
+
+---
+
+# Passo 6 — Criar Service Kubernetes
+
+Crie:
+
+```text
+service.yaml
+```
+
+Conteúdo:
+
+```yaml
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: projeto-kubernetes-service
+
+spec:
+  type: NodePort
+
+  selector:
+    app: projeto-kubernetes
+
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+      nodePort: 30080
+```
+
+---
+
+# Explicação do Service
+
+| Campo | Função |
+|---|---|
+| NodePort | Expõe aplicação |
+| port | Porta serviço |
+| targetPort | Porta container |
+| nodePort | Porta navegador |
+
+---
+
+# Passo 7 — Aplicar Deployment
 
 Execute:
 
 ```bash
-docker run -p 3000:3000 projeto-docker
-```
-
----
-
-# Explicação do Comando
-
-| Parte | Função |
-|---|---|
-| docker run | Executa container |
-| -p | Faz mapeamento de portas |
-| 3000:3000 | Porta local → container |
-| projeto-docker | Nome imagem |
-
----
-
-# Entendendo o Mapeamento de Portas
-
-```text
-3000:3000
-```
-
-significa:
-
-```text
-PORTA_PC : PORTA_CONTAINER
-```
-
-Exemplo:
-
-```text
-localhost:3000 → aplicação dentro container
-```
-
----
-
-# Problema Comum — Porta em Uso
-
-Erro:
-
-```text
-Bind for 0.0.0.0:3000 failed
-```
-
-Significa que outra aplicação já usa porta 3000.
-
-Solução:
-
-```bash
-docker run -p 3001:3000 projeto-docker
-```
-
-Depois acessar:
-
-```text
-http://localhost:3001
-```
-
----
-
-# Passo 6 — Testar Aplicação
-
-Abra navegador:
-
-```text
-http://localhost:3000
+kubectl apply -f deployment.yaml
 ```
 
 Resultado esperado:
 
 ```text
-Aplicacao Docker funcionando!
+deployment.apps/projeto-kubernetes created
 ```
 
 ---
 
-# Passo 7 — Ver Containers em Execução
-
-Abra outro terminal:
+# Passo 8 — Aplicar Service
 
 ```bash
-docker ps
+kubectl apply -f service.yaml
 ```
 
-Resultado:
+Resultado esperado:
 
 ```text
-CONTAINER ID   IMAGE              STATUS
-xxxxxxxx       projeto-docker     Up
+service/projeto-kubernetes-service created
 ```
 
 ---
 
-# Explicação do docker ps
+# Passo 9 — Verificar Pods
 
-Mostra:
+```bash
+kubectl get pods
+```
 
-- containers ativos
-- portas utilizadas
-- status execução
-- imagens utilizadas
+Resultado esperado:
+
+```text
+NAME                                  READY   STATUS
+projeto-kubernetes-xxxxx              1/1     Running
+projeto-kubernetes-yyyyy              1/1     Running
+```
+
+⚠ IMPORTANTE:
+
+Se aparecer:
+
+```text
+ContainerCreating
+```
+
+aguarde alguns segundos.
 
 ---
 
-# Passo 8 — Parar Container
+# Problema Comum — ErrImageNeverPull
 
-Copie CONTAINER ID:
+Se aparecer:
 
-```bash
-docker stop ID_DO_CONTAINER
+```text
+ErrImageNeverPull
 ```
 
-Exemplo:
+verifique:
+
+- imagem criada corretamente
+- nome imagem igual deployment
+- uso de `:latest`
+- `imagePullPolicy: IfNotPresent`
+
+---
+
+# Passo 10 — Verificar Services
 
 ```bash
-docker stop 5ab123cd
+kubectl get services
+```
+
+Resultado esperado:
+
+```text
+NAME                         TYPE       PORT(S)
+projeto-kubernetes-service   NodePort   3000:30080/TCP
 ```
 
 ---
 
-# Passo 9 — Remover Container
+# Passo 11 — Testar Aplicação
 
-```bash
-docker rm ID_DO_CONTAINER
+Tente acessar:
+
+```text
+http://localhost:30080
 ```
 
 ---
 
-# Passo 10 — Remover Imagem Docker
+# Problema Comum — Porta não abre
+
+No Windows com Docker Desktop, o NodePort pode não funcionar diretamente.
+
+Solução:
+
+Execute:
 
 ```bash
-docker rmi projeto-docker
+kubectl port-forward service/projeto-kubernetes-service 3000:3000
+```
+
+Resultado esperado:
+
+```text
+Forwarding from 127.0.0.1:3000 -> 3000
+```
+
+⚠ NÃO feche esse terminal.
+
+Depois abra:
+
+```text
+http://localhost:3000
 ```
 
 ---
 
 # Conceitos Aprendidos
 
-# Containers
+# Pods
 
-Ambientes isolados para aplicações.
-
----
-
-# Imagens Docker
-
-Modelos reutilizáveis utilizados para criar containers.
+Menor unidade executável do Kubernetes.
 
 ---
 
-# Portabilidade
+# Deployments
 
-A aplicação funciona igualmente em diferentes ambientes.
-
----
-
-# Padronização
-
-Todos ambientes possuem mesmas dependências.
+Gerenciam containers automaticamente.
 
 ---
 
-# Fluxo do Projeto
+# Services
 
-```text
-Aplicação Node.js
-        ↓
-Dockerfile
-        ↓
-Docker Build
-        ↓
-Imagem Docker
-        ↓
-Container
-        ↓
-Navegador
+Expõem aplicações na rede.
+
+---
+
+# Escalabilidade
+
+Permite aumentar quantidade de containers facilmente.
+
+---
+
+# Alta Disponibilidade
+
+Mantém aplicação funcionando mesmo com falhas.
+
+---
+
+# Escalando Aplicação
+
+Altere:
+
+```yaml
+replicas: 2
 ```
 
----
+para:
 
-# Comandos Mais Importantes
+```yaml
+replicas: 5
+```
 
-## Ver imagens
+Depois execute:
 
 ```bash
-docker images
+kubectl apply -f deployment.yaml
 ```
-
----
-
-## Ver containers ativos
-
-```bash
-docker ps
-```
-
----
-
-## Ver todos containers
-
-```bash
-docker ps -a
-```
-
----
-
-## Parar container
-
-```bash
-docker stop ID
-```
-
----
-
-## Remover container
-
-```bash
-docker rm ID
-```
-
----
-
-## Remover imagem
-
-```bash
-docker rmi NOME
-```
-
----
-
-# Problemas Mais Comuns
-
-# Docker Desktop fechado
-
-Erro:
-
-```text
-failed to connect to docker api
-```
-
-Solução:
-
-- Abrir Docker Desktop
-
----
-
-# Dockerfile incorreto
-
-Erro:
-
-```text
-failed to read dockerfile
-```
-
-Solução:
-
-- Verificar nome do arquivo
-
----
-
-# Porta ocupada
-
-Erro:
-
-```text
-port is already allocated
-```
-
-Solução:
-
-- Trocar porta externa
-
----
-
-# Aplicação não abre
 
 Verifique:
 
-- Docker Desktop aberto
-- Container rodando
-- Porta correta
-- Navegador acessando localhost
+```bash
+kubectl get pods
+```
+
+---
+
+# Atualizando Aplicação
+
+Altere:
+
+```javascript
+res.end('Nova versao Kubernetes!');
+```
+
+Depois execute:
+
+```bash
+docker build -t projeto-kubernetes:latest .
+```
+
+Reinicie deployment:
+
+```bash
+kubectl rollout restart deployment projeto-kubernetes
+```
+
+---
+
+# Verificando Logs
+
+```bash
+kubectl logs NOME_DO_POD
+```
+
+---
+
+# Entrando no Container
+
+```bash
+kubectl exec -it NOME_DO_POD -- sh
+```
+
+---
+
+# Removendo Recursos
+
+## Remover deployment
+
+```bash
+kubectl delete -f deployment.yaml
+```
+
+---
+
+## Remover service
+
+```bash
+kubectl delete -f service.yaml
+```
+
+---
+
+# Conceitos DevOps Aplicados
+
+- Containers
+- Orquestração
+- Escalabilidade
+- Deploy automatizado
+- Alta disponibilidade
+- Infraestrutura moderna
 
 ---
 
 # Melhorias Futuras
 
-Você pode evoluir projeto para:
+Este projeto pode evoluir para:
 
-- Docker Compose
 - Banco de Dados
-- Kubernetes
+- Helm
+- Ingress
 - CI/CD
 - Jenkins
 - GitHub Actions
-- Cloud Computing
+- Monitoramento
+- Cloud Kubernetes
+- Microserviços
 
 ---
 
 # Conclusão
 
-Docker simplifica criação de ambientes modernos através de containers isolados, padronizados e portáveis.
+Kubernetes automatiza gerenciamento de containers e facilita escalabilidade, disponibilidade e manutenção de aplicações modernas.
 
-A tecnologia é amplamente utilizada em DevOps, Cloud Computing e microsserviços modernos.
+A combinação Docker + Kubernetes é amplamente utilizada em ambientes DevOps, Cloud Computing e microsserviços.
 
 ---
